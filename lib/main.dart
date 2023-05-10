@@ -4,28 +4,67 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 
 class DataService{
-  final ValueNotifier<List> tableStateNotifier = new ValueNotifier([]);
+  final ValueNotifier<Map> tableStateNotifier = ValueNotifier({
+    "jsonObjects" : [], 
+    "propertyNames" : [""],
+    "columnNames" : [""]
+  });
 
-  void carregar(index){
+  void carregar(index) {
     var res = null;
-    print('carregar #1 - antes de carregarCervejas');
-    if (index == 1) res = carregarCervejas();
-    print('carregar #2 - carregarCervejas retornou $res');
-
+    List<Function> loads = [carregarCafes, carregarCervejas, carregarNacoes];
+    loads[index]();
   }
 
-  Future<void> carregarCervejas() async{
+  Future<void> carregarCafes() async {
+    var coffeesUri = Uri(
+      scheme: 'https',
+      host: 'random-data-api.com',
+      path: 'api/coffee/random_coffee',
+      queryParameters: {'size': '5'}
+    );
+
+    var jsonString = await http.read(coffeesUri);
+    var coffeesJson = jsonDecode(jsonString);
+    tableStateNotifier.value = {
+      "jsonObjects" : coffeesJson,
+      "propertyNames" : ["blend_name", "origin", "variety"],
+      "columnNames" : ["Nome", "Origem", "Variedade"]
+    };
+  }
+
+  Future<void> carregarCervejas() async {
     var beersUri = Uri(
       scheme: 'https',
       host: 'random-data-api.com',
       path: 'api/beer/random_beer',
-      queryParameters: {'size': '5'});
+      queryParameters: {'size': '5'}
+    );
 
-    print('carregarCervejas #1 - antes do await');
     var jsonString = await http.read(beersUri);
-    print('carregarCervejas #2 - depois do await');
     var beersJson = jsonDecode(jsonString);
-    tableStateNotifier.value = beersJson;
+    tableStateNotifier.value = {
+      "jsonObjects" : beersJson,
+      "propertyNames" : ["name","style","ibu"],
+      "columnNames" : ["Nome", "Estilo", "IBU"]
+    };
+  }
+
+  Future<void> carregarNacoes() async {
+    var nationsUri = Uri(
+      scheme: 'https',
+      host: 'random-data-api.com',
+      path: 'api/nation/random_nation',
+      queryParameters: {'size': '5'}
+    );
+
+    var jsonString = await http.read(nationsUri);
+    var nationsJson = jsonDecode(jsonString);
+    tableStateNotifier.value = {
+      "jsonObjects" : nationsJson,
+      "propertyNames" : ["nationality", "language", "capital"],
+      "columnNames" : ["Nacionalidade", "Idioma", "Capital"]
+    };
   }
 }
 
@@ -50,9 +89,9 @@ class MyApp extends StatelessWidget {
           valueListenable: dataService.tableStateNotifier,
           builder:(_, value, __){
             return DataTableWidget(
-              jsonObjects:value, 
-              propertyNames: ["name","style","ibu"], 
-              columnNames: ["Nome", "Estilo", "IBU"]
+              jsonObjects: value["jsonObjects"], 
+              propertyNames: value["propertyNames"],
+              columnNames: value["columnNames"]
             );
           }
         ),
