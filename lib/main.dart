@@ -7,8 +7,9 @@ class DataService{
   final ValueNotifier<Map> tableStateNotifier = ValueNotifier({
     "jsonObjects" : [], 
     "propertyNames" : [""],
-    "columnNames" : [""]
+    "columnNames" : [""],
   });
+  String itemCount = '5';
 
   void carregar(index) {
     var res = null;
@@ -21,7 +22,7 @@ class DataService{
       scheme: 'https',
       host: 'random-data-api.com',
       path: 'api/coffee/random_coffee',
-      queryParameters: {'size': '5'}
+      queryParameters: {'size': itemCount}
     );
 
     var jsonString = await http.read(coffeesUri);
@@ -38,7 +39,7 @@ class DataService{
       scheme: 'https',
       host: 'random-data-api.com',
       path: 'api/beer/random_beer',
-      queryParameters: {'size': '5'}
+      queryParameters: {'size': itemCount}
     );
 
     var jsonString = await http.read(beersUri);
@@ -55,7 +56,7 @@ class DataService{
       scheme: 'https',
       host: 'random-data-api.com',
       path: 'api/nation/random_nation',
-      queryParameters: {'size': '5'}
+      queryParameters: {'size': itemCount}
     );
 
     var jsonString = await http.read(nationsUri);
@@ -85,17 +86,56 @@ class MyApp extends StatelessWidget {
         appBar: AppBar( 
           title: const Text("Dicas"),
         ),
-        body: ValueListenableBuilder(
-          valueListenable: dataService.tableStateNotifier,
-          builder:(_, value, __){
-            return DataTableWidget(
-              jsonObjects: value["jsonObjects"], 
-              propertyNames: value["propertyNames"],
-              columnNames: value["columnNames"]
-            );
-          }
-        ),
+        body: NewBody(),
         bottomNavigationBar: NewNavBar(itemSelectedCallback: dataService.carregar),
+      )
+    );
+  }
+}
+
+class NewBody extends HookWidget {
+  NewBody();
+
+  @override
+  Widget build(BuildContext context) {
+    var state = useState('5');
+    return SingleChildScrollView(
+      child: Column(
+        children: [
+          DropdownButtonFormField<String>(
+            value: state.value,
+            decoration: InputDecoration(labelText: 'Número de itens'),
+            padding: EdgeInsets.all(16),
+            items: [
+              DropdownMenuItem(
+                value: '5',
+                child: Text('5')
+              ),
+              DropdownMenuItem(
+                value: '10',
+                child: Text('10')
+              ),
+              DropdownMenuItem(
+                value: '15',
+                child: Text('15')
+              )
+            ],
+            onChanged: (value) {  
+              state.value = value.toString();
+              dataService.itemCount = state.value;
+            }
+          ),
+          ValueListenableBuilder(
+            valueListenable: dataService.tableStateNotifier,
+            builder:(_, value, __){
+              return DataTableWidget(
+                jsonObjects: value["jsonObjects"], 
+                propertyNames: value["propertyNames"],
+                columnNames: value["columnNames"]
+              );
+            }
+          )
+        ]
       )
     );
   }
